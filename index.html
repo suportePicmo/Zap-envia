@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Disparos Excel - iOS</title>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f2f2f7; padding: 20px; margin: 0; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); max-width: 500px; margin: 0 auto 20px auto; }
+        h2 { color: #00a884; text-align: center; margin-top: 0; }
+        label { font-weight: bold; display: block; margin-top: 15px; margin-bottom: 5px; color: #1c1c1e; }
+        textarea { width: 100%; height: 100px; border: 1px solid #c7c7cc; border-radius: 8px; padding: 10px; box-sizing: border-box; font-size: 16px; font-family: inherit; resize: vertical; }
+        select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #c7c7cc; font-size: 16px; background-color: white; margin-bottom: 10px; }
+        input[type="file"] { margin-bottom: 10px; font-size: 14px; }
+        button { width: 100%; background-color: #007aff; color: white; border: none; padding: 14px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; transition: background 0.2s; }
+        button:hover { opacity: 0.9; }
+        .btn-success { background-color: #34c759; }
+        .status-msg { font-size: 14px; color: #666; font-style: italic; margin-top: 5px; margin-bottom: 15px; }
+        .grid-colunas { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Disparador Automático Excel</h2>
+    
+    <label>1. Selecione a Planilha do Excel (.xlsx ou .xls)</label>
+    <input type="file" id="fileExcel" accept=".xlsx, .xls" onchange="processarArquivoExcel()" />
+    <div id="txtStatusPlanilha" class="status-msg">Nenhuma planilha carregada.</div>
+
+    <div id="areaColunas" style="display: none;" class="grid-colunas">
+        <div>
+            <label>Coluna do Telefone:</label>
+            <select id="selectTel"></select>
+        </div>
+        <div>
+            <label>Coluna do Nome:</label>
+            <select id="selectNome"></select>
+        </div>
+    </div>
+
+    <label>2. Mensagem Personalizada</label>
+    <textarea id="txtMensagem">Olá {Nome}, tudo bem? Esta é uma mensagem automática.</textarea>
+    <div class="status-msg" style="margin-top:-10px; margin-bottom:15px;">Use {Nome} para puxar o nome da planilha.</div>
+
+    <button class="btn-success" onclick="gerarDadosParaOAtalho()">3. GERAR DISPAROS PARA O IPHONE</button>
+    
+    <div id="areaBotaoAtalho" style="margin-top: 15px; display: none;">
+        <a id="lnkAtalho" href="#">
+            <button style="background-color: #5856d6;">👉 ENVIAR DADOS PARA O APP ATALHOS</button>
+        </a>
+    </div>
+</div>
+
+<script>
+    let dadosPlanilhaJson = [];
+
+    // Função que lê o arquivo Excel direto no iPhone via Safari
+    function processarArquivoExcel() {
+        const input = document.getElementById('fileExcel');
+        const status = document.getElementById('txtStatusPlanilha');
+        
+        if (!input.files || input.files.length === 0) return;
+        
+        const arquivo = input.files[0];
+        const leitor = new FileReader();
+        
+        leitor.onload = function(e) {
+            const dados = new Uint8Array(e.target.result);
+            const livro = XLSX.read(dados, { type: 'array' });
+            
+            // Pega a primeira aba da planilha
+            const primeiraAba = livro.SheetNames[0];
+            const abaOriginal = livro.Sheets[primeiraAba];
+            
+            // Converte as linhas para formato JSON (Objeto)
+            dadosPlanilhaJson = XLSX.utils.sheet_to_json(abaOriginal);
+            
+            if (dadosPlanilhaJson.length === 0) {
+                alert("A planilha está vazia!");
+                return;
+            }
+            
+            // Descobre os nomes das colunas da planilha (cabeçalho)
+            const colunas = Object.keys(dadosPlanilhaJson[0]);
+            
+            // Preenche as opções de seleção de colunas na tela
+            const selectTel = document.getElementById('selectTel');
+            const selectNome = document.getElementById('selectNome');
+            
+            selectTel.innerHTML = '';
+            selectNome.innerHTML = '';
+            
+            colunas.forEach(col => {
+                let opt1 = document.createElement('option');
+                opt1.value = col; opt1.innerText = col;
+                selectTel.appendChild(opt1);
+                
+                let opt2 = document.createElement('option');
+                opt2.value = col; opt2.innerText = col;
+                selectNome.appendChild(opt2);
+                
+                // Pré-seleção inteligente baseada no nome da coluna
+                if (col.toLowerCase().includes('tel') || col.toLowerCase().includes('num') || col.toLowerCase().includes('fone')) {
+                    selectTel.value = col;
+                }
+                if (col.toLowerCase().includes('nome') || col.toLowerCase().includes('cliente')) {
+                    selectNome.value = col;
+                }
+            });
+            
+            status.innerText = `Sucesso! ${dadosPlanilhaJson.length} contatos encontrados.`;
+            status.style.color = "#34c759";
+            document.getElementById('areaColunas').style.display = 'grid';
+        };
+        
+        leitor.readAsArrayBuffer(arquivo);
+    }
+
+    function gerarDadosParaOAtalho() {
+        const mensagemBase = document.getElementById("txtMensagem").value.trim();
+        const colTel = document.getElementById("selectTel").value;
+        const colNome = document.getElementById("selectNome").value;
+
+        if (dadosPlanilhaJson.length === 0) {
+            alert("Por favor, carregue uma planilha do Excel primeiro!");
+            return;
+        }
+
+        let dadosFormatados = [];
+
+        // Varre as linhas extraídas do arquivo Excel
+        dadosPlanilhaJson.forEach(linha => {
+            if (linha[colTel] && linha[colNome]) {
+                const nome = String(linha[colNome]).trim();
+                let num = String(linha[colTel]).replace('.0', '').trim().replace(/\D/g, '');
+                
+                if (num.length >= 10 && !num.startsWith("55")) {
+                    num = "55" + num;
+                }
+                
+                if (num) {
+                    // Substitui a tag {Nome} pelo nome correspondente desta linha do Excel
+                    let msgPersonalizada = mensagemBase.replace(/{Nome}/g, nome);
+                    dadosFormatados.push(`${num}|||${msgPersonalizada}`);
+                }
+            }
+        });
+
+        if (dadosFormatados.length === 0) {
+            alert("Nenhum dado válido encontrado com as colunas selecionadas.");
+            return;
+        }
+
+        // Junta tudo no padrão compactado esperado pelo aplicativo Atalhos do iOS
+        const textoFinal = dadosFormatados.join('FFF');
+        const textoCodificado = encodeURIComponent(textoFinal);
+
+        // Gera a chamada para o app Atalhos (O Atalho no iPhone DEVE se chamar "Enviador Zap")
+        const urlAtalho = `shortcuts://run-shortcut?name=Enviador%20Zap&input=${textoCodificado}`;
+        
+        document.getElementById("lnkAtalho").href = urlAtalho;
+        document.getElementById("areaBotaoAtalho").style.display = "block";
+    }
+</script>
+
+</body>
+</html>
