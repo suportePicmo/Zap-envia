@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerenciador de Envios WhatsApp Business</title>
+    <title>Automação Turbo - WhatsApp Business</title>
     <style>
         :root {
             --primary-color: #075E54;
@@ -42,8 +42,8 @@
         }
 
         .instruction-box {
-            background-color: #e3f2fd;
-            border-left: 5px solid #2196f3;
+            background-color: #fff3cd;
+            border-left: 5px solid #ffc107;
             padding: 15px;
             margin-bottom: 25px;
             border-radius: 4px;
@@ -55,13 +55,23 @@
 
         textarea {
             width: 100%;
-            height: 120px;
+            height: 100px;
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 5px;
             resize: vertical;
-            font-family: inherit;
             box-sizing: border-box;
+        }
+
+        .controls {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
         }
 
         button {
@@ -73,19 +83,17 @@
             transition: background 0.3s ease;
         }
 
-        .btn-primary {
-            background-color: var(--secondary-color);
-            color: white;
-            margin-top: 10px;
-        }
-
-        .btn-primary:hover {
-            background-color: var(--primary-color);
-        }
-
+        .btn-primary { background-color: var(--secondary-color); color: white; }
         .btn-success { background-color: var(--success-color); color: white; }
         .btn-danger { background-color: var(--danger-color); color: white; }
-        .btn-action { background-color: #2196f3; color: white; }
+
+        input[type="number"] {
+            width: 60px;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            text-align: center;
+        }
 
         table {
             width: 100%;
@@ -99,10 +107,7 @@
             border-bottom: 1px solid #ddd;
         }
 
-        th {
-            background-color: var(--primary-color);
-            color: white;
-        }
+        th { background-color: var(--primary-color); color: white; }
 
         tr.active-row {
             background-color: #e8f5e9;
@@ -117,77 +122,75 @@
             font-weight: bold;
         }
 
-        .status-pendente { background-color: #ffe082; color: #81c784; color: #b78103; }
-        .status-sim { background-color: #c8e6c9; color: #2e7d32; }
-        .status-nao { background-color: #ffcdd2; color: #c62828; }
-
-        .actions-cell button {
-            padding: 6px 12px;
-            font-size: 0.9em;
-            margin-right: 5px;
-        }
+        .status-pendente { background-color: #ffe082; color: #b78103; }
+        .status-processado { background-color: #c8e6c9; color: #2e7d32; }
+        .countdown { color: var(--danger-color); font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Gerenciador de Fluxo - WhatsApp Business</h1>
+    <h1>Automação Turbo - Linha por Linha</h1>
     
     <div class="instruction-box">
-        <strong>Como usar:</strong> <br>
-        1. Cole os dados da sua planilha no campo abaixo seguindo o padrão: <code>Número;Mensagem</code> (um por linha). <br>
-        2. Clique em "Carregar Dados". <br>
-        3. A linha atual ficará destacada em verde. Clique em <strong>"Chamar no WhatsApp"</strong>. <br>
-        4. O sistema abrirá a conversa. Se o contato <strong>existir (SIM)</strong>, envie a mensagem e clique em "Encontrou (SIM)". Se <strong>não existir (NÃO)</strong>, clique em "Não Encontrou (NÃO)" para pular para a próxima linha automaticamente.
+        <strong>⚠️ ATENÇÃO PARA FUNCIONAR:</strong><br>
+        Quando o primeiro link abrir, o seu navegador vai tentar **bloquear o Pop-up**. <br>
+        Olhe na barra de endereço do navegador, clique no ícone de bloqueio e marque <strong>"Sempre permitir pop-ups deste site"</strong>.
     </div>
 
     <div class="import-section">
-        <h3>1º Passo: Colar dados da Planilha</h3>
-        <textarea id="csvData" placeholder="Exemplo:&#10;5511999999999;Olá, tudo bem?&#10;5511888888888;Segunda mensagem de teste"></textarea>
-        <button class="btn-primary" onclick="processData()">Carregar Dados da Planilha</button>
+        <h3>1º Passo: Colar dados da Planilha (Número;Mensagem)</h3>
+        <textarea id="csvData" placeholder="5511999999999;Olá, esta é uma mensagem automática"></textarea>
+        <button class="btn-primary" onclick="processData()">Carregar Dados</button>
     </div>
 
-    <hr>
+    <div class="controls">
+        <label><strong>Tempo de espera por linha (segundos):</strong></label>
+        <input type="number" id="delayInput" value="6" min="3">
+        <button class="btn-success" id="btnStart" onclick="startAutomation()" disabled>▶️ INICIAR AUTOMAÇÃO</button>
+        <button class="btn-danger" onclick="stopAutomation()">⏸️ PARAR</button>
+        <span id="timerDisplay" class="countdown"></span>
+    </div>
 
-    <h3>Lista de Contatos e Controle de Fluxo</h3>
+    <h3>Acompanhamento da Planilha</h3>
     <table id="contactsTable">
         <thead>
             <tr>
-                <th>#</th>
+                <th>Linha</th>
                 <th>Número</th>
                 <th>Mensagem</th>
                 <th>Status</th>
-                <th>Ações Obrigatórias</th>
             </tr>
         </thead>
         <tbody id="tableBody">
-            </tbody>
+            <tr><td colspan="4" style="text-align:center;">Cole os dados e clique em Carregar.</td></tr>
+        </tbody>
     </table>
 </div>
 
 <script>
     let contacts = [];
     let currentIndex = 0;
+    let isRunning = false;
+    let timeoutId = null;
+    let countdownId = null;
 
     function processData() {
         const rawText = document.getElementById('csvData').value.trim();
-        if (!rawText) {
-            alert('Por favor, insira algum dado antes de carregar.');
-            return;
-        }
+        if (!rawText) return alert('Insira os dados da planilha!');
 
         const lines = rawText.split('\n');
-        contacts = lines.map((line, index) => {
+        contacts = lines.map((line) => {
             const parts = line.split(';');
             return {
-                id: index,
-                phone: parts[0] ? parts[0].trim().replace(/\D/g, '') : '', // Remove caracteres não numéricos
+                phone: parts[0] ? parts[0].trim().replace(/\D/g, '') : '',
                 message: parts[1] ? parts[1].trim() : '',
                 status: 'Pendente'
             };
         }).filter(c => c.phone !== '');
 
         currentIndex = 0;
+        document.getElementById('btnStart').disabled = false;
         renderTable();
     }
 
@@ -195,60 +198,79 @@
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = '';
 
-        if (contacts.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Nenhum dado carregado ainda.</td></tr>`;
-            return;
-        }
-
         contacts.forEach((contact, index) => {
             const tr = document.createElement('tr');
-            
-            if (index === currentIndex && contact.status === 'Pendente') {
-                tr.className = 'active-row';
-            }
+            if (index === currentIndex && isRunning) tr.className = 'active-row';
 
-            let statusClass = 'status-pendente';
-            if (contact.status === 'Encontrado (SIM)') statusClass = 'status-sim';
-            if (contact.status === 'Não Encontrado (NÃO)') statusClass = 'status-nao';
+            const statusClass = contact.status === 'Pendente' ? 'status-pendente' : 'status-processado';
 
             tr.innerHTML = `
                 <td>${index + 1}</td>
                 <td>${contact.phone}</td>
                 <td>${contact.message}</td>
                 <td><span class="status ${statusClass}">${contact.status}</span></td>
-                <td class="actions-cell">
-                    ${index === currentIndex && contact.status === 'Pendente' ? `
-                        <button class="btn-action" onclick="openWhatsApp('${contact.phone}', '${encodeURIComponent(contact.message)}')">1º Chamar no WA</button>
-                        <button class="btn-success" onclick="updateStatus('Encontrado (SIM)')">SIM (Encontrou)</button>
-                        <button class="btn-danger" onclick="updateStatus('Não Encontrado (NÃO)')">NÃO (Pular Linha)</button>
-                    ` : `
-                        <span style="color: #999; font-size: 0.9em;">Aguardando fluxo...</span>
-                    `}
-                </td>
             `;
             tbody.appendChild(tr);
         });
     }
 
-    function openWhatsApp(phone, message) {
-        // Usa a API oficial do WhatsApp que funciona tanto para Web quanto para o App Business instalado
-        const url = `https://wa.me/${phone}?text=${message}`;
-        window.open(url, '_blank');
+    function startAutomation() {
+        if (contacts.length === 0) return;
+        isRunning = true;
+        document.getElementById('btnStart').disabled = true;
+        nextStep();
     }
 
-    function updateStatus(status) {
-        if (currentIndex < contacts.length) {
-            contacts[currentIndex].status = status;
-            
-            // Avança para a próxima linha (pula a linha na planilha simulada)
-            currentIndex++;
-            
-            renderTable();
-            
-            if (currentIndex >= contacts.length) {
-                alert('Fim da lista! Todos os contatos da planilha foram processados.');
-            }
+    function nextStep() {
+        if (!isRunning) return;
+
+        if (currentIndex >= contacts.length) {
+            stopAutomation();
+            document.getElementById('timerDisplay').innerText = "✅ Concluído!";
+            alert('Toda a planilha foi processada!');
+            return;
         }
+
+        renderTable();
+        
+        // Pega o contato atual
+        const contact = contacts[currentIndex];
+        
+        // Abre o WhatsApp com número e mensagem preenchidos
+        const url = `https://wa.me/${contact.phone}?text=${encodeURIComponent(contact.message)}`;
+        window.open(url, '_blank');
+
+        // Atualiza status da linha atual
+        contacts[currentIndex].status = 'Aberto/Enviado';
+        currentIndex++; // Pula para a próxima linha internamente
+
+        // Inicia contagem regressiva para a PRÓXIMA linha
+        let delay = parseInt(document.getElementById('delayInput').value);
+        startCountdown(delay);
+    }
+
+    function startCountdown(seconds) {
+        clearInterval(countdownId);
+        const display = document.getElementById('timerDisplay');
+        
+        countdownId = setInterval(() => {
+            seconds--;
+            display.innerText = `Próxima linha em: ${seconds}s`;
+            
+            if (seconds <= 0) {
+                clearInterval(countdownId);
+                nextStep();
+            }
+        }, 1000);
+    }
+
+    function stopAutomation() {
+        isRunning = false;
+        clearTimeout(timeoutId);
+        clearInterval(countdownId);
+        document.getElementById('timerDisplay').innerText = "⏸️ Pausado";
+        document.getElementById('btnStart').disabled = false;
+        renderTable();
     }
 </script>
 
