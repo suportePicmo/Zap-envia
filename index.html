@@ -56,7 +56,6 @@
 <script>
     let dadosPlanilhaJson = [];
 
-    // Função que lê o arquivo Excel direto no iPhone via Safari
     function processarArquivoExcel() {
         const input = document.getElementById('fileExcel');
         const status = document.getElementById('txtStatusPlanilha');
@@ -70,11 +69,9 @@
             const dados = new Uint8Array(e.target.result);
             const livro = XLSX.read(dados, { type: 'array' });
             
-            // Pega a primeira aba da planilha
             const primeiraAba = livro.SheetNames[0];
             const abaOriginal = livro.Sheets[primeiraAba];
             
-            // Converte as linhas para formato JSON (Objeto)
             dadosPlanilhaJson = XLSX.utils.sheet_to_json(abaOriginal);
             
             if (dadosPlanilhaJson.length === 0) {
@@ -82,10 +79,7 @@
                 return;
             }
             
-            // Descobre os nomes das colunas da planilha (cabeçalho)
             const colunas = Object.keys(dadosPlanilhaJson[0]);
-            
-            // Preenche as opções de seleção de colunas na tela
             const selectTel = document.getElementById('selectTel');
             const selectNome = document.getElementById('selectNome');
             
@@ -101,7 +95,6 @@
                 opt2.value = col; opt2.innerText = col;
                 selectNome.appendChild(opt2);
                 
-                // Pré-seleção inteligente baseada no nome da coluna
                 if (col.toLowerCase().includes('tel') || col.toLowerCase().includes('num') || col.toLowerCase().includes('fone')) {
                     selectTel.value = col;
                 }
@@ -130,18 +123,22 @@
 
         let dadosFormatados = [];
 
-        // Varre as linhas extraídas do arquivo Excel
         dadosPlanilhaJson.forEach(linha => {
             if (linha[colTel] && linha[colNome]) {
                 const nome = String(linha[colNome]).trim();
                 let num = String(linha[colTel]).replace('.0', '').trim().replace(/\D/g, '');
                 
+                // CORREÇÃO 1: Garante o código do país 55 se o usuário não digitou
                 if (num.length >= 10 && !num.startsWith("55")) {
                     num = "55" + num;
                 }
                 
+                // CORREÇÃO 2: CRUCIAL - Injeta o '+' exigido pelo ecossistema Apple Shortcuts
                 if (num) {
-                    // Substitui a tag {Nome} pelo nome correspondente desta linha do Excel
+                    num = "+" + num;
+                }
+                
+                if (num) {
                     let msgPersonalizada = mensagemBase.replace(/{Nome}/g, nome);
                     dadosFormatados.push(`${num}|||${msgPersonalizada}`);
                 }
@@ -153,11 +150,11 @@
             return;
         }
 
-        // Junta tudo no padrão compactado esperado pelo aplicativo Atalhos do iOS
-        const textoFinal = dadosFormatados.join('FFF');
+        // CORREÇÃO 3: Junta os dados usando Quebras de Linha reais (\n) em vez de 'FFF'
+        const textoFinal = dadosFormatados.join('\n');
         const textoCodificado = encodeURIComponent(textoFinal);
 
-        // Gera a chamada para o app Atalhos (O Atalho no iPhone DEVE se chamar "Enviador Zap")
+        // O nome do seu atalho no iPhone DEVE ser exatamente: Enviador Zap
         const urlAtalho = `shortcuts://run-shortcut?name=Enviador%20Zap&input=${textoCodificado}`;
         
         document.getElementById("lnkAtalho").href = urlAtalho;
