@@ -124,37 +124,41 @@
         let dadosFormatados = [];
 
         dadosPlanilhaJson.forEach(linha => {
-            if (linha[colTel] && linha[colNome]) {
-                const nome = String(linha[colNome]).trim();
+            // Verifica se a linha tem a coluna de telefone preenchida
+            if (linha[colTel]) { 
+                const nome = linha[colNome] ? String(linha[colNome]).trim() : "";
                 let num = String(linha[colTel]).replace('.0', '').trim().replace(/\D/g, '');
                 
-                // CORREÇÃO 1: Garante o código do país 55 se o usuário não digitou
+                // Injeta o 55 do Brasil caso falte
                 if (num.length >= 10 && !num.startsWith("55")) {
                     num = "55" + num;
                 }
                 
-                // CORREÇÃO 2: CRUCIAL - Injeta o '+' exigido pelo ecossistema Apple Shortcuts
-                if (num) {
+                // Valida se o número tem um tamanho mínimo real e coloca o '+' do iPhone
+                if (num.length >= 12) {
                     num = "+" + num;
-                }
-                
-                if (num) {
+                    
+                    // Troca a tag pelo nome ou deixa em branco se não tiver nome
                     let msgPersonalizada = mensagemBase.replace(/{Nome}/g, nome);
+                    
+                    // Monta a estrutura perfeita com as 3 barras
                     dadosFormatados.push(`${num}|||${msgPersonalizada}`);
                 }
             }
         });
 
         if (dadosFormatados.length === 0) {
-            alert("Nenhum dado válido encontrado com as colunas selecionadas.");
+            alert("Nenhum contato válido encontrado. Verifique se a coluna de telefone está correta.");
             return;
         }
 
-        // CORREÇÃO 3: Junta os dados usando Quebras de Linha reais (\n) em vez de 'FFF'
+        // Junta tudo usando quebras de linha reais do sistema
         const textoFinal = dadosFormatados.join('\n');
+        
+        // Codifica para URL para poder abrir o app Atalhos (Shortcuts) com segurança
         const textoCodificado = encodeURIComponent(textoFinal);
 
-        // O nome do seu atalho no iPhone DEVE ser exatamente: Enviador Zap
+        // O atalho lá no iPhone TEM que se chamar "Enviador Zap"
         const urlAtalho = `shortcuts://run-shortcut?name=Enviador%20Zap&input=${textoCodificado}`;
         
         document.getElementById("lnkAtalho").href = urlAtalho;
