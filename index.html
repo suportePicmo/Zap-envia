@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Automação Turbo - WhatsApp Business</title>
+    <title>Automação Turbo V2 - Nome e Telefone</title>
     <style>
         :root {
             --primary-color: #075E54;
@@ -42,15 +42,19 @@
         }
 
         .instruction-box {
-            background-color: #fff3cd;
-            border-left: 5px solid #ffc107;
+            background-color: #e8f5e9;
+            border-left: 5px solid var(--success-color);
             padding: 15px;
             margin-bottom: 25px;
             border-radius: 4px;
         }
 
-        .import-section {
-            margin-bottom: 30px;
+        .section-box {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #e0e0e0;
         }
 
         textarea {
@@ -61,10 +65,12 @@
             border-radius: 5px;
             resize: vertical;
             box-sizing: border-box;
+            font-family: inherit;
         }
 
         .controls {
-            background: #f8f9fa;
+            background: #fff3cd;
+            border: 1px solid #ffeeba;
             padding: 15px;
             border-radius: 5px;
             margin: 15px 0;
@@ -78,13 +84,13 @@
             cursor: pointer;
             border: none;
             border-radius: 5px;
-            padding: 10px 20px;
+            padding: 12px 24px;
             font-weight: bold;
             transition: background 0.3s ease;
         }
 
         .btn-primary { background-color: var(--secondary-color); color: white; }
-        .btn-success { background-color: var(--success-color); color: white; }
+        .btn-success { background-color: var(--success-color); color: white; font-size: 1.1em; }
         .btn-danger { background-color: var(--danger-color); color: white; }
 
         input[type="number"] {
@@ -93,6 +99,7 @@
             border: 1px solid #ccc;
             border-radius: 4px;
             text-align: center;
+            font-weight: bold;
         }
 
         table {
@@ -124,46 +131,57 @@
 
         .status-pendente { background-color: #ffe082; color: #b78103; }
         .status-processado { background-color: #c8e6c9; color: #2e7d32; }
-        .countdown { color: var(--danger-color); font-weight: bold; }
+        .countdown { color: var(--danger-color); font-weight: bold; font-size: 1.2em; margin-left: auto; }
+        
+        .hint { font-size: 0.85em; color: #666; margin-top: 5px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Automação Turbo - Linha por Linha</h1>
+    <h1>Automação Turbo V2 - Nome e Telefone</h1>
     
     <div class="instruction-box">
-        <strong>⚠️ ATENÇÃO PARA FUNCIONAR:</strong><br>
-        Quando o primeiro link abrir, o seu navegador vai tentar **bloquear o Pop-up**. <br>
-        Olhe na barra de endereço do navegador, clique no ícone de bloqueio e marque <strong>"Sempre permitir pop-ups deste site"</strong>.
+        <strong>💡 NOVIDADE DE FORMATO:</strong><br>
+        Você pode selecionar as duas colunas no **Excel** (Coluna 1: Nome | Coluna 2: Telefone), dar <strong>Ctrl+C</strong> e dar <strong>Ctrl+V</strong> direto no campo abaixo! O sistema já entende a divisão.
     </div>
 
-    <div class="import-section">
-        <h3>1º Passo: Colar dados da Planilha (Número;Mensagem)</h3>
-        <textarea id="csvData" placeholder="5511999999999;Olá, esta é uma mensagem automática"></textarea>
-        <button class="btn-primary" onclick="processData()">Carregar Dados</button>
+    <div class="section-box">
+        <h3>1º Passo: Colar Dados da Planilha (Coluna 1: Nome | Coluna 2: Telefone)</h3>
+        <textarea id="csvData" placeholder="João Silva	5511999999999&#10;Maria Souza	5511888888888"></textarea>
+        <div class="hint">Aceita formato do Excel (copiar e colar) ou separado por ponto e vírgula (Ex: João;55119...)</div>
+    </div>
+
+    <div class="section-box">
+        <h3>2º Passo: Escrever a Mensagem Padrão</h3>
+        <textarea id="msgTemplate" placeholder="Olá {nome}, tudo bem? Segue o seu atendimento automático!"></textarea>
+        <div class="hint">Use o termo <strong>{nome}</strong> exatamente assim onde você quiser que apareça o nome do cliente.</div>
+        <button class="btn-primary" style="margin-top: 15px;" onclick="processData()">Carregar Configurações</button>
     </div>
 
     <div class="controls">
-        <label><strong>Tempo de espera por linha (segundos):</strong></label>
-        <input type="number" id="delayInput" value="6" min="3">
-        <button class="btn-success" id="btnStart" onclick="startAutomation()" disabled>▶️ INICIAR AUTOMAÇÃO</button>
+        <label><strong>Timer de Espera (segundos):</strong></label>
+        <input type="number" id="delayInput" value="10" min="3">
+        
+        <button class="btn-success" id="btnStart" onclick="startAutomation()" disabled>▶️ INICIAR ENVIO TURBO</button>
         <button class="btn-danger" onclick="stopAutomation()">⏸️ PARAR</button>
+        
         <span id="timerDisplay" class="countdown"></span>
     </div>
 
-    <h3>Acompanhamento da Planilha</h3>
+    <h3>Acompanhamento do Fluxo de Envio</h3>
     <table id="contactsTable">
         <thead>
             <tr>
                 <th>Linha</th>
-                <th>Número</th>
-                <th>Mensagem</th>
+                <th>Nome</th>
+                <th>Telefone</th>
+                <th>Mensagem Gerada</th>
                 <th>Status</th>
             </tr>
         </thead>
         <tbody id="tableBody">
-            <tr><td colspan="4" style="text-align:center;">Cole os dados e clique em Carregar.</td></tr>
+            <tr><td colspan="5" style="text-align:center; color:#777;">Aguardando o carregamento dos dados...</td></tr>
         </tbody>
     </table>
 </div>
@@ -172,26 +190,44 @@
     let contacts = [];
     let currentIndex = 0;
     let isRunning = false;
-    let timeoutId = null;
     let countdownId = null;
 
     function processData() {
         const rawText = document.getElementById('csvData').value.trim();
-        if (!rawText) return alert('Insira os dados da planilha!');
+        const template = document.getElementById('msgTemplate').value.trim();
+
+        if (!rawText) return alert('Por favor, cole os dados da sua planilha no 1º Passo.');
+        if (!template) return alert('Por favor, digite uma mensagem padrão no 2º Passo.');
 
         const lines = rawText.split('\n');
         contacts = lines.map((line) => {
-            const parts = line.split(';');
+            // Identifica se está separado por TAB (Excel) ou por Ponto e Vírgula
+            const separator = line.includes('\t') ? '\t' : ';';
+            const parts = line.split(separator);
+            
+            const nomeCliente = parts[0] ? parts[0].trim() : 'Cliente';
+            const telefoneCliente = parts[1] ? parts[1].trim().replace(/\D/g, '') : '';
+
+            // Monta a mensagem personalizada trocando {nome} pelo nome real
+            const mensagemPersonalizada = template.replace(/{nome}/g, nomeCliente);
+
             return {
-                phone: parts[0] ? parts[0].trim().replace(/\D/g, '') : '',
-                message: parts[1] ? parts[1].trim() : '',
+                name: nomeCliente,
+                phone: telefoneCliente,
+                message: mensagemPersonalizada,
                 status: 'Pendente'
             };
         }).filter(c => c.phone !== '');
 
+        if(contacts.length === 0) {
+            alert('Não foi possível identificar números válidos na segunda coluna. Verifique o formato.');
+            return;
+        }
+
         currentIndex = 0;
         document.getElementById('btnStart').disabled = false;
         renderTable();
+        alert(`Sucesso! ${contacts.length} contatos carregados e prontos para envio.`);
     }
 
     function renderTable() {
@@ -206,8 +242,9 @@
 
             tr.innerHTML = `
                 <td>${index + 1}</td>
+                <td>${contact.name}</td>
                 <td>${contact.phone}</td>
-                <td>${contact.message}</td>
+                <td><small>${contact.message}</small></td>
                 <td><span class="status ${statusClass}">${contact.status}</span></td>
             `;
             tbody.appendChild(tr);
@@ -226,25 +263,24 @@
 
         if (currentIndex >= contacts.length) {
             stopAutomation();
-            document.getElementById('timerDisplay').innerText = "✅ Concluído!";
-            alert('Toda a planilha foi processada!');
+            document.getElementById('timerDisplay').innerText = "✅ Tudo Pronto!";
+            alert('Fim da planilha! Todos os envios foram processados.');
             return;
         }
 
         renderTable();
         
-        // Pega o contato atual
         const contact = contacts[currentIndex];
         
-        // Abre o WhatsApp com número e mensagem preenchidos
+        // Dispara a janela do WhatsApp Business com o texto customizado
         const url = `https://wa.me/${contact.phone}?text=${encodeURIComponent(contact.message)}`;
         window.open(url, '_blank');
 
-        // Atualiza status da linha atual
-        contacts[currentIndex].status = 'Aberto/Enviado';
-        currentIndex++; // Pula para a próxima linha internamente
+        // Modifica o status e corre para a próxima linha
+        contacts[currentIndex].status = 'Processado';
+        currentIndex++; 
 
-        // Inicia contagem regressiva para a PRÓXIMA linha
+        // Ativa o timer de 10 segundos configurado
         let delay = parseInt(document.getElementById('delayInput').value);
         startCountdown(delay);
     }
@@ -255,18 +291,17 @@
         
         countdownId = setInterval(() => {
             seconds--;
-            display.innerText = `Próxima linha em: ${seconds}s`;
+            display.innerText = `Próximo envio em: ${seconds}s`;
             
             if (seconds <= 0) {
                 clearInterval(countdownId);
-                nextStep();
+                nextStep(); // Dispara o próximo da lista automaticamente
             }
         }, 1000);
     }
 
     function stopAutomation() {
         isRunning = false;
-        clearTimeout(timeoutId);
         clearInterval(countdownId);
         document.getElementById('timerDisplay').innerText = "⏸️ Pausado";
         document.getElementById('btnStart').disabled = false;
