@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Automação Turbo V2 - Nome e Telefone</title>
+    <title>Automação Turbo V3 - 100% Web</title>
     <style>
         :root {
             --primary-color: #075E54;
@@ -35,15 +35,11 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
-        h1 {
-            color: var(--primary-color);
-            text-align: center;
-            margin-bottom: 20px;
-        }
+        h1 { color: var(--primary-color); text-align: center; margin-bottom: 20px; }
 
         .instruction-box {
-            background-color: #e8f5e9;
-            border-left: 5px solid var(--success-color);
+            background-color: #fff3cd;
+            border-left: 5px solid #ffc107;
             padding: 15px;
             margin-bottom: 25px;
             border-radius: 4px;
@@ -69,8 +65,8 @@
         }
 
         .controls {
-            background: #fff3cd;
-            border: 1px solid #ffeeba;
+            background: #e8f5e9;
+            border: 1px solid #a5d6a7;
             padding: 15px;
             border-radius: 5px;
             margin: 15px 0;
@@ -132,56 +128,50 @@
         .status-pendente { background-color: #ffe082; color: #b78103; }
         .status-processado { background-color: #c8e6c9; color: #2e7d32; }
         .countdown { color: var(--danger-color); font-weight: bold; font-size: 1.2em; margin-left: auto; }
-        
-        .hint { font-size: 0.85em; color: #666; margin-top: 5px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Automação Turbo V2 - Nome e Telefone</h1>
+    <h1>Automação Web 100% Automática</h1>
     
     <div class="instruction-box">
-        <strong>💡 NOVIDADE DE FORMATO:</strong><br>
-        Você pode selecionar as duas colunas no **Excel** (Coluna 1: Nome | Coluna 2: Telefone), dar <strong>Ctrl+C</strong> e dar <strong>Ctrl+V</strong> direto no campo abaixo! O sistema já entende a divisão.
+        <strong>⚠️ IMPORTANTE:</strong> Permita que esta página abra <strong>Pop-ups</strong> no seu navegador, senão ela não conseguirá abrir as abas do WhatsApp automaticamente.
     </div>
 
     <div class="section-box">
-        <h3>1º Passo: Colar Dados da Planilha (Coluna 1: Nome | Coluna 2: Telefone)</h3>
-        <textarea id="csvData" placeholder="João Silva	5511999999999&#10;Maria Souza	5511888888888"></textarea>
-        <div class="hint">Aceita formato do Excel (copiar e colar) ou separado por ponto e vírgula (Ex: João;55119...)</div>
+        <h3>1º Passo: Colar Dados da Planilha (Nome [TAB] Telefone)</h3>
+        <textarea id="csvData" placeholder="Luiz	5548999182475&#10;Bruno	5548991038499"></textarea>
     </div>
 
     <div class="section-box">
         <h3>2º Passo: Escrever a Mensagem Padrão</h3>
         <textarea id="msgTemplate" placeholder="Olá {nome}, tudo bem? Segue o seu atendimento automático!"></textarea>
-        <div class="hint">Use o termo <strong>{nome}</strong> exatamente assim onde você quiser que apareça o nome do cliente.</div>
-        <button class="btn-primary" style="margin-top: 15px;" onclick="processData()">Carregar Configurações</button>
+        <button class="btn-primary" style="margin-top: 15px;" onclick="processData()">Carregar Dados</button>
     </div>
 
     <div class="controls">
-        <label><strong>Timer de Espera (segundos):</strong></label>
-        <input type="number" id="delayInput" value="10" min="3">
+        <label><strong>Intervalo entre abas (segundos):</strong></label>
+        <input type="number" id="delayInput" value="10" min="5">
         
-        <button class="btn-success" id="btnStart" onclick="startAutomation()" disabled>▶️ INICIAR ENVIO TURBO</button>
+        <button class="btn-success" id="btnStart" onclick="startAutomation()" disabled>▶️ INICIAR ENVIO 100% AUTOMÁTICO</button>
         <button class="btn-danger" onclick="stopAutomation()">⏸️ PARAR</button>
         
         <span id="timerDisplay" class="countdown"></span>
     </div>
 
-    <h3>Acompanhamento do Fluxo de Envio</h3>
-    <table id="contactsTable">
+    <h3>Acompanhamento</h3>
+    <table>
         <thead>
             <tr>
                 <th>Linha</th>
                 <th>Nome</th>
                 <th>Telefone</th>
-                <th>Mensagem Gerada</th>
                 <th>Status</th>
             </tr>
         </thead>
         <tbody id="tableBody">
-            <tr><td colspan="5" style="text-align:center; color:#777;">Aguardando o carregamento dos dados...</td></tr>
+            <tr><td colspan="4" style="text-align:center; color:#777;">Aguardando dados...</td></tr>
         </tbody>
     </table>
 </div>
@@ -196,19 +186,15 @@
         const rawText = document.getElementById('csvData').value.trim();
         const template = document.getElementById('msgTemplate').value.trim();
 
-        if (!rawText) return alert('Por favor, cole os dados da sua planilha no 1º Passo.');
-        if (!template) return alert('Por favor, digite uma mensagem padrão no 2º Passo.');
+        if (!rawText || !template) return alert('Preencha os dados e a mensagem!');
 
         const lines = rawText.split('\n');
         contacts = lines.map((line) => {
-            // Identifica se está separado por TAB (Excel) ou por Ponto e Vírgula
             const separator = line.includes('\t') ? '\t' : ';';
             const parts = line.split(separator);
             
             const nomeCliente = parts[0] ? parts[0].trim() : 'Cliente';
             const telefoneCliente = parts[1] ? parts[1].trim().replace(/\D/g, '') : '';
-
-            // Monta a mensagem personalizada trocando {nome} pelo nome real
             const mensagemPersonalizada = template.replace(/{nome}/g, nomeCliente);
 
             return {
@@ -219,15 +205,10 @@
             };
         }).filter(c => c.phone !== '');
 
-        if(contacts.length === 0) {
-            alert('Não foi possível identificar números válidos na segunda coluna. Verifique o formato.');
-            return;
-        }
-
         currentIndex = 0;
         document.getElementById('btnStart').disabled = false;
         renderTable();
-        alert(`Sucesso! ${contacts.length} contatos carregados e prontos para envio.`);
+        alert(`${contacts.length} contatos carregados!`);
     }
 
     function renderTable() {
@@ -237,14 +218,12 @@
         contacts.forEach((contact, index) => {
             const tr = document.createElement('tr');
             if (index === currentIndex && isRunning) tr.className = 'active-row';
-
             const statusClass = contact.status === 'Pendente' ? 'status-pendente' : 'status-processado';
 
             tr.innerHTML = `
                 <td>${index + 1}</td>
                 <td>${contact.name}</td>
                 <td>${contact.phone}</td>
-                <td><small>${contact.message}</small></td>
                 <td><span class="status ${statusClass}">${contact.status}</span></td>
             `;
             tbody.appendChild(tr);
@@ -263,24 +242,20 @@
 
         if (currentIndex >= contacts.length) {
             stopAutomation();
-            document.getElementById('timerDisplay').innerText = "✅ Tudo Pronto!";
-            alert('Fim da planilha! Todos os envios foram processados.');
+            document.getElementById('timerDisplay').innerText = "✅ Concluído!";
             return;
         }
 
         renderTable();
-        
         const contact = contacts[currentIndex];
         
-        // Dispara a janela do WhatsApp Business com o texto customizado
-        const url = `https://wa.me/${contact.phone}?text=${encodeURIComponent(contact.message)}`;
+        // O SEGREDO: Enviamos o 'autoclick=true' na URL para a extensão saber que deve clicar em enviar!
+        const url = `https://web.whatsapp.com/send?phone=${contact.phone}&text=${encodeURIComponent(contact.message)}&autoclick=true`;
         window.open(url, '_blank');
 
-        // Modifica o status e corre para a próxima linha
-        contacts[currentIndex].status = 'Processado';
+        contacts[currentIndex].status = 'Enviado';
         currentIndex++; 
 
-        // Ativa o timer de 10 segundos configurado
         let delay = parseInt(document.getElementById('delayInput').value);
         startCountdown(delay);
     }
@@ -291,11 +266,10 @@
         
         countdownId = setInterval(() => {
             seconds--;
-            display.innerText = `Próximo envio em: ${seconds}s`;
-            
+            display.innerText = `Próxima linha em: ${seconds}s`;
             if (seconds <= 0) {
                 clearInterval(countdownId);
-                nextStep(); // Dispara o próximo da lista automaticamente
+                nextStep();
             }
         }, 1000);
     }
