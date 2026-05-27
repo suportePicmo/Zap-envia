@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel de Disparos Excel - iOS</title>
+    <title>Painel de Disparos Direto - WA</title>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f2f2f7; padding: 20px; margin: 0; }
@@ -15,17 +15,24 @@
         input[type="file"] { margin-bottom: 10px; font-size: 14px; }
         button { width: 100%; background-color: #007aff; color: white; border: none; padding: 14px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; transition: background 0.2s; }
         button:hover { opacity: 0.9; }
-        .btn-success { background-color: #34c759; }
+        .btn-success { background-color: #00a884; }
         .status-msg { font-size: 14px; color: #666; font-style: italic; margin-top: 5px; margin-bottom: 15px; }
         .grid-colunas { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        
+        /* Estilos da nova lista de contatos */
+        .contato-card { background-color: #f9f9f9; border: 1px solid #e5e5ea; border-radius: 10px; padding: 15px; margin-bottom: 15px; }
+        .contato-nome { font-size: 18px; font-weight: bold; color: #1c1c1e; margin-bottom: 5px; }
+        .contato-numero { font-size: 14px; color: #666; margin-bottom: 10px; }
+        .btn-enviar-zap { background-color: #25D366; border-radius: 8px; padding: 12px; font-size: 15px; display: block; text-align: center; text-decoration: none; color: white; font-weight: bold; }
+        .btn-enviado { background-color: #8e8e93 !important; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2>Disparador Automático Excel</h2>
+    <h2>Disparador Inteligente Web</h2>
     
-    <label>1. Selecione a Planilha do Excel (.xlsx ou .xls)</label>
+    <label>1. Selecione a Planilha (.xlsx ou .xls)</label>
     <input type="file" id="fileExcel" accept=".xlsx, .xls" onchange="processarArquivoExcel()" />
     <div id="txtStatusPlanilha" class="status-msg">Nenhuma planilha carregada.</div>
 
@@ -44,13 +51,14 @@
     <textarea id="txtMensagem">Olá {Nome}, tudo bem? Esta é uma mensagem automática.</textarea>
     <div class="status-msg" style="margin-top:-10px; margin-bottom:15px;">Use {Nome} para puxar o nome da planilha.</div>
 
-    <button class="btn-success" onclick="gerarDadosParaOAtalho()">3. GERAR DISPAROS PARA O IPHONE</button>
+    <button class="btn-success" onclick="gerarPainelDeEnvios()">3. GERAR LISTA DE DISPAROS</button>
+</div>
+
+<div class="card" id="areaListaContatos" style="display: none;">
+    <h3 style="text-align: center; color: #1c1c1e; margin-top: 0;">Lista de Contatos</h3>
+    <div class="status-msg" style="text-align: center;">Clique em enviar, confirme no WhatsApp e volte para o próximo.</div>
     
-    <div id="areaBotaoAtalho" style="margin-top: 15px; display: none;">
-        <a id="lnkAtalho" href="#">
-            <button style="background-color: #5856d6;">👉 ENVIAR DADOS PARA O APP ATALHOS</button>
-        </a>
-    </div>
+    <div id="listaDinamica"></div>
 </div>
 
 <script>
@@ -68,7 +76,6 @@
         leitor.onload = function(e) {
             const dados = new Uint8Array(e.target.result);
             const livro = XLSX.read(dados, { type: 'array' });
-            
             const primeiraAba = livro.SheetNames[0];
             const abaOriginal = livro.Sheets[primeiraAba];
             
@@ -83,86 +90,82 @@
             const selectTel = document.getElementById('selectTel');
             const selectNome = document.getElementById('selectNome');
             
-            selectTel.innerHTML = '';
-            selectNome.innerHTML = '';
+            selectTel.innerHTML = ''; selectNome.innerHTML = '';
             
             colunas.forEach(col => {
-                let opt1 = document.createElement('option');
-                opt1.value = col; opt1.innerText = col;
+                let opt1 = document.createElement('option'); opt1.value = col; opt1.innerText = col;
                 selectTel.appendChild(opt1);
                 
-                let opt2 = document.createElement('option');
-                opt2.value = col; opt2.innerText = col;
+                let opt2 = document.createElement('option'); opt2.value = col; opt2.innerText = col;
                 selectNome.appendChild(opt2);
                 
-                if (col.toLowerCase().includes('tel') || col.toLowerCase().includes('num') || col.toLowerCase().includes('fone')) {
-                    selectTel.value = col;
-                }
-                if (col.toLowerCase().includes('nome') || col.toLowerCase().includes('cliente')) {
-                    selectNome.value = col;
-                }
+                if (col.toLowerCase().includes('tel') || col.toLowerCase().includes('num')) selectTel.value = col;
+                if (col.toLowerCase().includes('nome') || col.toLowerCase().includes('cliente')) selectNome.value = col;
             });
             
             status.innerText = `Sucesso! ${dadosPlanilhaJson.length} contatos encontrados.`;
-            status.style.color = "#34c759";
+            status.style.color = "#00a884";
             document.getElementById('areaColunas').style.display = 'grid';
         };
         
         leitor.readAsArrayBuffer(arquivo);
     }
 
-    function gerarDadosParaOAtalho() {
+    function gerarPainelDeEnvios() {
         const mensagemBase = document.getElementById("txtMensagem").value.trim();
         const colTel = document.getElementById("selectTel").value;
         const colNome = document.getElementById("selectNome").value;
 
         if (dadosPlanilhaJson.length === 0) {
-            alert("Por favor, carregue uma planilha do Excel primeiro!");
-            return;
+            alert("Carregue uma planilha primeiro!"); return;
         }
 
-        let dadosFormatados = [];
+        let htmlLista = "";
+        let contatosValidos = 0;
 
-        dadosPlanilhaJson.forEach(linha => {
-            // Verifica se a linha tem a coluna de telefone preenchida
+        dadosPlanilhaJson.forEach((linha, index) => {
             if (linha[colTel]) { 
-                const nome = linha[colNome] ? String(linha[colNome]).trim() : "";
+                let nome = linha[colNome] ? String(linha[colNome]).trim() : "Cliente";
                 let num = String(linha[colTel]).replace('.0', '').trim().replace(/\D/g, '');
                 
-                // Injeta o 55 do Brasil caso falte
-                if (num.length >= 10 && !num.startsWith("55")) {
-                    num = "55" + num;
-                }
+                if (num.length >= 10 && !num.startsWith("55")) num = "55" + num;
                 
-                // Valida se o número tem um tamanho mínimo real e coloca o '+' do iPhone
                 if (num.length >= 12) {
-                    num = "+" + num;
-                    
-                    // Troca a tag pelo nome ou deixa em branco se não tiver nome
+                    contatosValidos++;
                     let msgPersonalizada = mensagemBase.replace(/{Nome}/g, nome);
                     
-                    // Monta a estrutura perfeita com as 3 barras
-                    dadosFormatados.push(`${num}|||${msgPersonalizada}`);
+                    // O Link Oficial da API do WhatsApp que faz toda a mágica:
+                    let linkWhatsApp = `https://wa.me/${num}?text=${encodeURIComponent(msgPersonalizada)}`;
+                    
+                    htmlLista += `
+                        <div class="contato-card">
+                            <div class="contato-nome">${nome}</div>
+                            <div class="contato-numero">📞 +${num}</div>
+                            <a href="${linkWhatsApp}" target="_blank" onclick="marcarComoEnviado(this)" style="text-decoration: none;">
+                                <div class="btn-enviar-zap">🟢 ENVIAR MENSAGEM</div>
+                            </a>
+                        </div>
+                    `;
                 }
             }
         });
 
-        if (dadosFormatados.length === 0) {
-            alert("Nenhum contato válido encontrado. Verifique se a coluna de telefone está correta.");
-            return;
+        if (contatosValidos === 0) {
+            alert("Nenhum número válido encontrado na coluna selecionada."); return;
         }
 
-        // Junta tudo usando quebras de linha reais do sistema
-        const textoFinal = dadosFormatados.join('\n');
+        document.getElementById("listaDinamica").innerHTML = htmlLista;
+        document.getElementById("areaListaContatos").style.display = "block";
         
-        // Codifica para URL para poder abrir o app Atalhos (Shortcuts) com segurança
-        const textoCodificado = encodeURIComponent(textoFinal);
+        // Rola a tela para baixo até a lista
+        document.getElementById("areaListaContatos").scrollIntoView({ behavior: 'smooth' });
+    }
 
-        // O atalho lá no iPhone TEM que se chamar "Enviador Zap"
-        const urlAtalho = `shortcuts://run-shortcut?name=Enviador%20Zap&input=${textoCodificado}`;
-        
-        document.getElementById("lnkAtalho").href = urlAtalho;
-        document.getElementById("areaBotaoAtalho").style.display = "block";
+    // Função que muda a cor do botão para você saber quem já foi
+    function marcarComoEnviado(elemento) {
+        let botao = elemento.querySelector('.btn-enviar-zap');
+        botao.classList.add('btn-enviado');
+        botao.innerText = '✔️ ABERTO NO WHATSAPP';
     }
 </script>
 
