@@ -3,169 +3,252 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel de Disparos Direto - WA</title>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <title>Gerenciador de Envios WhatsApp Business</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f2f2f7; padding: 20px; margin: 0; }
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); max-width: 500px; margin: 0 auto 20px auto; }
-        h2 { color: #00a884; text-align: center; margin-top: 0; }
-        label { font-weight: bold; display: block; margin-top: 15px; margin-bottom: 5px; color: #1c1c1e; }
-        textarea { width: 100%; height: 100px; border: 1px solid #c7c7cc; border-radius: 8px; padding: 10px; box-sizing: border-box; font-size: 16px; font-family: inherit; resize: vertical; }
-        select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #c7c7cc; font-size: 16px; background-color: white; margin-bottom: 10px; }
-        input[type="file"] { margin-bottom: 10px; font-size: 14px; }
-        button { width: 100%; background-color: #007aff; color: white; border: none; padding: 14px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; transition: background 0.2s; }
-        button:hover { opacity: 0.9; }
-        .btn-success { background-color: #00a884; }
-        .status-msg { font-size: 14px; color: #666; font-style: italic; margin-top: 5px; margin-bottom: 15px; }
-        .grid-colunas { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        
-        /* Estilos da nova lista de contatos */
-        .contato-card { background-color: #f9f9f9; border: 1px solid #e5e5ea; border-radius: 10px; padding: 15px; margin-bottom: 15px; }
-        .contato-nome { font-size: 18px; font-weight: bold; color: #1c1c1e; margin-bottom: 5px; }
-        .contato-numero { font-size: 14px; color: #666; margin-bottom: 10px; }
-        .btn-enviar-zap { background-color: #25D366; border-radius: 8px; padding: 12px; font-size: 15px; display: block; text-align: center; text-decoration: none; color: white; font-weight: bold; }
-        .btn-enviado { background-color: #8e8e93 !important; }
+        :root {
+            --primary-color: #075E54;
+            --secondary-color: #128C7E;
+            --background-color: #f0f2f5;
+            --card-background: #ffffff;
+            --text-color: #333333;
+            --success-color: #4CAF50;
+            --danger-color: #f44336;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background: var(--card-background);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .instruction-box {
+            background-color: #e3f2fd;
+            border-left: 5px solid #2196f3;
+            padding: 15px;
+            margin-bottom: 25px;
+            border-radius: 4px;
+        }
+
+        .import-section {
+            margin-bottom: 30px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 120px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            resize: vertical;
+            font-family: inherit;
+            box-sizing: border-box;
+        }
+
+        button {
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 20px;
+            font-weight: bold;
+            transition: background 0.3s ease;
+        }
+
+        .btn-primary {
+            background-color: var(--secondary-color);
+            color: white;
+            margin-top: 10px;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-color);
+        }
+
+        .btn-success { background-color: var(--success-color); color: white; }
+        .btn-danger { background-color: var(--danger-color); color: white; }
+        .btn-action { background-color: #2196f3; color: white; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        tr.active-row {
+            background-color: #e8f5e9;
+            font-weight: bold;
+            border: 2px solid var(--secondary-color);
+        }
+
+        .status {
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+
+        .status-pendente { background-color: #ffe082; color: #81c784; color: #b78103; }
+        .status-sim { background-color: #c8e6c9; color: #2e7d32; }
+        .status-nao { background-color: #ffcdd2; color: #c62828; }
+
+        .actions-cell button {
+            padding: 6px 12px;
+            font-size: 0.9em;
+            margin-right: 5px;
+        }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h2>Disparador Inteligente Web</h2>
+<div class="container">
+    <h1>Gerenciador de Fluxo - WhatsApp Business</h1>
     
-    <label>1. Selecione a Planilha (.xlsx ou .xls)</label>
-    <input type="file" id="fileExcel" accept=".xlsx, .xls" onchange="processarArquivoExcel()" />
-    <div id="txtStatusPlanilha" class="status-msg">Nenhuma planilha carregada.</div>
-
-    <div id="areaColunas" style="display: none;" class="grid-colunas">
-        <div>
-            <label>Coluna do Telefone:</label>
-            <select id="selectTel"></select>
-        </div>
-        <div>
-            <label>Coluna do Nome:</label>
-            <select id="selectNome"></select>
-        </div>
+    <div class="instruction-box">
+        <strong>Como usar:</strong> <br>
+        1. Cole os dados da sua planilha no campo abaixo seguindo o padrão: <code>Número;Mensagem</code> (um por linha). <br>
+        2. Clique em "Carregar Dados". <br>
+        3. A linha atual ficará destacada em verde. Clique em <strong>"Chamar no WhatsApp"</strong>. <br>
+        4. O sistema abrirá a conversa. Se o contato <strong>existir (SIM)</strong>, envie a mensagem e clique em "Encontrou (SIM)". Se <strong>não existir (NÃO)</strong>, clique em "Não Encontrou (NÃO)" para pular para a próxima linha automaticamente.
     </div>
 
-    <label>2. Mensagem Personalizada</label>
-    <textarea id="txtMensagem">Olá {Nome}, tudo bem? Esta é uma mensagem automática.</textarea>
-    <div class="status-msg" style="margin-top:-10px; margin-bottom:15px;">Use {Nome} para puxar o nome da planilha.</div>
+    <div class="import-section">
+        <h3>1º Passo: Colar dados da Planilha</h3>
+        <textarea id="csvData" placeholder="Exemplo:&#10;5511999999999;Olá, tudo bem?&#10;5511888888888;Segunda mensagem de teste"></textarea>
+        <button class="btn-primary" onclick="processData()">Carregar Dados da Planilha</button>
+    </div>
 
-    <button class="btn-success" onclick="gerarPainelDeEnvios()">3. GERAR LISTA DE DISPAROS</button>
-</div>
+    <hr>
 
-<div class="card" id="areaListaContatos" style="display: none;">
-    <h3 style="text-align: center; color: #1c1c1e; margin-top: 0;">Lista de Contatos</h3>
-    <div class="status-msg" style="text-align: center;">Clique em enviar, confirme no WhatsApp e volte para o próximo.</div>
-    
-    <div id="listaDinamica"></div>
+    <h3>Lista de Contatos e Controle de Fluxo</h3>
+    <table id="contactsTable">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Número</th>
+                <th>Mensagem</th>
+                <th>Status</th>
+                <th>Ações Obrigatórias</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody">
+            </tbody>
+    </table>
 </div>
 
 <script>
-    let dadosPlanilhaJson = [];
+    let contacts = [];
+    let currentIndex = 0;
 
-    function processarArquivoExcel() {
-        const input = document.getElementById('fileExcel');
-        const status = document.getElementById('txtStatusPlanilha');
-        
-        if (!input.files || input.files.length === 0) return;
-        
-        const arquivo = input.files[0];
-        const leitor = new FileReader();
-        
-        leitor.onload = function(e) {
-            const dados = new Uint8Array(e.target.result);
-            const livro = XLSX.read(dados, { type: 'array' });
-            const primeiraAba = livro.SheetNames[0];
-            const abaOriginal = livro.Sheets[primeiraAba];
-            
-            dadosPlanilhaJson = XLSX.utils.sheet_to_json(abaOriginal);
-            
-            if (dadosPlanilhaJson.length === 0) {
-                alert("A planilha está vazia!");
-                return;
-            }
-            
-            const colunas = Object.keys(dadosPlanilhaJson[0]);
-            const selectTel = document.getElementById('selectTel');
-            const selectNome = document.getElementById('selectNome');
-            
-            selectTel.innerHTML = ''; selectNome.innerHTML = '';
-            
-            colunas.forEach(col => {
-                let opt1 = document.createElement('option'); opt1.value = col; opt1.innerText = col;
-                selectTel.appendChild(opt1);
-                
-                let opt2 = document.createElement('option'); opt2.value = col; opt2.innerText = col;
-                selectNome.appendChild(opt2);
-                
-                if (col.toLowerCase().includes('tel') || col.toLowerCase().includes('num')) selectTel.value = col;
-                if (col.toLowerCase().includes('nome') || col.toLowerCase().includes('cliente')) selectNome.value = col;
-            });
-            
-            status.innerText = `Sucesso! ${dadosPlanilhaJson.length} contatos encontrados.`;
-            status.style.color = "#00a884";
-            document.getElementById('areaColunas').style.display = 'grid';
-        };
-        
-        leitor.readAsArrayBuffer(arquivo);
-    }
-
-    function gerarPainelDeEnvios() {
-        const mensagemBase = document.getElementById("txtMensagem").value.trim();
-        const colTel = document.getElementById("selectTel").value;
-        const colNome = document.getElementById("selectNome").value;
-
-        if (dadosPlanilhaJson.length === 0) {
-            alert("Carregue uma planilha primeiro!"); return;
+    function processData() {
+        const rawText = document.getElementById('csvData').value.trim();
+        if (!rawText) {
+            alert('Por favor, insira algum dado antes de carregar.');
+            return;
         }
 
-        let htmlLista = "";
-        let contatosValidos = 0;
+        const lines = rawText.split('\n');
+        contacts = lines.map((line, index) => {
+            const parts = line.split(';');
+            return {
+                id: index,
+                phone: parts[0] ? parts[0].trim().replace(/\D/g, '') : '', // Remove caracteres não numéricos
+                message: parts[1] ? parts[1].trim() : '',
+                status: 'Pendente'
+            };
+        }).filter(c => c.phone !== '');
 
-        dadosPlanilhaJson.forEach((linha, index) => {
-            if (linha[colTel]) { 
-                let nome = linha[colNome] ? String(linha[colNome]).trim() : "Cliente";
-                let num = String(linha[colTel]).replace('.0', '').trim().replace(/\D/g, '');
-                
-                if (num.length >= 10 && !num.startsWith("55")) num = "55" + num;
-                
-                if (num.length >= 12) {
-                    contatosValidos++;
-                    let msgPersonalizada = mensagemBase.replace(/{Nome}/g, nome);
-                    
-                    // O Link Oficial da API do WhatsApp que faz toda a mágica:
-                    let linkWhatsApp = `https://wa.me/${num}?text=${encodeURIComponent(msgPersonalizada)}`;
-                    
-                    htmlLista += `
-                        <div class="contato-card">
-                            <div class="contato-nome">${nome}</div>
-                            <div class="contato-numero">📞 +${num}</div>
-                            <a href="${linkWhatsApp}" target="_blank" onclick="marcarComoEnviado(this)" style="text-decoration: none;">
-                                <div class="btn-enviar-zap">🟢 ENVIAR MENSAGEM</div>
-                            </a>
-                        </div>
-                    `;
-                }
+        currentIndex = 0;
+        renderTable();
+    }
+
+    function renderTable() {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+
+        if (contacts.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Nenhum dado carregado ainda.</td></tr>`;
+            return;
+        }
+
+        contacts.forEach((contact, index) => {
+            const tr = document.createElement('tr');
+            
+            if (index === currentIndex && contact.status === 'Pendente') {
+                tr.className = 'active-row';
             }
+
+            let statusClass = 'status-pendente';
+            if (contact.status === 'Encontrado (SIM)') statusClass = 'status-sim';
+            if (contact.status === 'Não Encontrado (NÃO)') statusClass = 'status-nao';
+
+            tr.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${contact.phone}</td>
+                <td>${contact.message}</td>
+                <td><span class="status ${statusClass}">${contact.status}</span></td>
+                <td class="actions-cell">
+                    ${index === currentIndex && contact.status === 'Pendente' ? `
+                        <button class="btn-action" onclick="openWhatsApp('${contact.phone}', '${encodeURIComponent(contact.message)}')">1º Chamar no WA</button>
+                        <button class="btn-success" onclick="updateStatus('Encontrado (SIM)')">SIM (Encontrou)</button>
+                        <button class="btn-danger" onclick="updateStatus('Não Encontrado (NÃO)')">NÃO (Pular Linha)</button>
+                    ` : `
+                        <span style="color: #999; font-size: 0.9em;">Aguardando fluxo...</span>
+                    `}
+                </td>
+            `;
+            tbody.appendChild(tr);
         });
-
-        if (contatosValidos === 0) {
-            alert("Nenhum número válido encontrado na coluna selecionada."); return;
-        }
-
-        document.getElementById("listaDinamica").innerHTML = htmlLista;
-        document.getElementById("areaListaContatos").style.display = "block";
-        
-        // Rola a tela para baixo até a lista
-        document.getElementById("areaListaContatos").scrollIntoView({ behavior: 'smooth' });
     }
 
-    // Função que muda a cor do botão para você saber quem já foi
-    function marcarComoEnviado(elemento) {
-        let botao = elemento.querySelector('.btn-enviar-zap');
-        botao.classList.add('btn-enviado');
-        botao.innerText = '✔️ ABERTO NO WHATSAPP';
+    function openWhatsApp(phone, message) {
+        // Usa a API oficial do WhatsApp que funciona tanto para Web quanto para o App Business instalado
+        const url = `https://wa.me/${phone}?text=${message}`;
+        window.open(url, '_blank');
+    }
+
+    function updateStatus(status) {
+        if (currentIndex < contacts.length) {
+            contacts[currentIndex].status = status;
+            
+            // Avança para a próxima linha (pula a linha na planilha simulada)
+            currentIndex++;
+            
+            renderTable();
+            
+            if (currentIndex >= contacts.length) {
+                alert('Fim da lista! Todos os contatos da planilha foram processados.');
+            }
+        }
     }
 </script>
 
