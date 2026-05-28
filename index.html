@@ -3,8 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel Controle Híbrido V3</title>
+    <title>Painel Controle Híbrido V4 - Excel Direct</title>
+    
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    
     <style>
         :root {
             --primary-color: #075E54;
@@ -20,8 +24,9 @@
         .container { width: 100%; max-width: 500px; background: var(--card-background); padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); box-sizing: border-box; }
         h1 { color: var(--primary-color); text-align: center; font-size: 1.4rem; margin-bottom: 15px; }
         .section-box { background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #e0e0e0; }
-        textarea, input[type="text"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 14px; margin-top: 5px; }
+        textarea, input[type="text"], input[type="file"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 14px; margin-top: 5px; }
         textarea { height: 90px; resize: none; }
+        input[type="file"] { background: white; cursor: pointer; }
         .status-connection { padding: 10px; text-align: center; font-weight: bold; border-radius: 6px; background-color: #ffe082; color: #b78103; margin-bottom: 12px; font-size: 0.9rem; }
         .connected { background-color: #c8e6c9; color: #2e7d32; }
         button { width: 100%; cursor: pointer; border: none; border-radius: 6px; padding: 14px; font-weight: bold; font-size: 1rem; margin-top: 8px; transition: background 0.2s; }
@@ -36,6 +41,7 @@
         .status { padding: 3px 8px; border-radius: 3px; font-weight: bold; font-size: 0.8rem; }
         .status-pendente { background-color: #ffe082; color: #b78103; }
         .status-processado { background-color: #c8e6c9; color: #2e7d32; }
+        .hint { font-size: 0.8rem; color: #666; margin-top: 4px; display: block; }
         
         /* Modal de Sucesso */
         .success-screen { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; justify-content: center; align-items: center; color: white; text-align: center; }
@@ -56,14 +62,15 @@
     <div id="connectionStatus" class="status-connection">Status: Desconectado do Computador</div>
 
     <div class="section-box">
-        <label><strong>2. Colar Colunas do Excel (Nome e Número):</strong></label>
-        <textarea id="csvData" placeholder="Cole as linhas copiadas do Excel aqui..."></textarea>
+        <label><strong>2. Importar Arquivo do Excel:</strong></label>
+        <input type="file" id="excelFile" accept=".xlsx, .xls">
+        <span class="hint">A planilha deve ter: Coluna A = Nome | Coluna B = Telefone</span>
     </div>
 
     <div class="section-box">
         <label><strong>3. Mensagem Customizada:</strong></label>
         <textarea id="msgTemplate" placeholder="Olá {nome}, sua mensagem aqui!"></textarea>
-        <button class="btn-primary" onclick="processData()">Carregar Contatos</button>
+        <button class="btn-primary" onclick="processExcel()">Carregar Dados do Excel</button>
     </div>
 
     <div class="section-box" style="background: #e8f5e9;">
@@ -81,7 +88,7 @@
             </tr>
         </thead>
         <tbody id="tableBody">
-            <tr><td colspan="3" style="text-align:center; color:#777;">Nenhum dado carregado.</td></tr>
+            <tr><td colspan="3" style="text-align:center; color:#777;">Nenhuma planilha importada.</td></tr>
         </tbody>
     </table>
 </div>
@@ -89,7 +96,7 @@
 <div id="successModal" class="success-screen">
     <div class="success-box">
         <h2 style="color: var(--success-color); margin-top: 0;">🎉 DISPARO CONCLUÍDO!</h2>
-        <p style="font-size: 1.1rem; font-weight: 500;">Todas as mensagens da sua lista foram enviadas com sucesso absoluto!</p>
+        <p style="font-size: 1.1rem; font-weight: 500;">Todas as mensagens da sua lista do Excel foram enviadas com sucesso absoluto!</p>
         <button class="btn-primary" onclick="fecharModal()" style="margin-top: 15px;">Ok, Fechar</button>
     </div>
 </div>
@@ -110,30 +117,55 @@
         });
         
         socket.on('connect_error', () => {
-            alert("Erro de conexão! Valide se o iPhone está no mesmo Wi-Fi do computador e se o IP digitado está correto.");
+            alert("Erro de conexão! Valide se o iPhone está no mesmo Wi-Fi do computador.");
         });
     }
 
-    function processData() {
-        const rawText = document.getElementById('csvData').value.trim();
+    function processExcel() {
+        const fileInput = document.getElementById('excelFile');
         const template = document.getElementById('msgTemplate').value.trim();
-        if (!rawText || !template) return alert('Insira os contatos e a mensagem padrão!');
 
-        contacts = rawText.split('\n').map(line => {
-            const separator = line.includes('\t') ? '\t' : ';';
-            const parts = line.split(separator);
-            return {
-                name: parts[0] ? parts[0].trim() : 'Cliente',
-                phone: parts[1] ? parts[1].replace(/\D/g, '') : '',
-                message: template.replace(/{nome}/g, parts[0] ? parts[0].trim() : 'Cliente'),
-                status: 'Pendente'
-            };
-        }).filter(c => c.phone);
+        if (!fileInput.files.length) return alert('Por favor, selecione um arquivo Excel primeiro!');
+        if (!template) return alert('Por favor, digite uma mensagem padrão!');
 
-        currentIndex = 0;
-        document.getElementById('btnStart').disabled = false;
-        renderTable();
-        document.getElementById('timerDisplay').innerText = `${contacts.length} Contatos Prontos!`;
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+
+        reader.onload = function(e) {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            
+            // Pega a primeira aba da planilha
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            
+            // Converte as linhas em formato de matriz [[ColunaA, ColunaB], [ColunaA, ColunaB]]
+            const sheetData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+            // Mapeia pulando linhas vazias
+            contacts = sheetData.map(row => {
+                const nomeCliente = row[0] ? String(row[0]).trim() : 'Cliente';
+                const telefoneCliente = row[1] ? String(row[1]).trim().replace(/\D/g, '') : '';
+                return {
+                    name: nomeCliente,
+                    phone: telefoneCliente,
+                    message: template.replace(/{nome}/g, nomeCliente),
+                    status: 'Pendente'
+                };
+            }).filter(c => c.phone !== ''); // Remove linhas sem telefone válido
+
+            if(contacts.length === 0) {
+                return alert('Nenhum contato válido encontrado. Certifique-se de que os números estão na segunda coluna (Coluna B).');
+            }
+
+            currentIndex = 0;
+            document.getElementById('btnStart').disabled = false;
+            renderTable();
+            document.getElementById('timerDisplay').innerText = `${contacts.length} Contatos Carregados!`;
+            alert(`Sucesso! ${contacts.length} contatos lidos do Excel.`);
+        };
+
+        reader.readAsArrayBuffer(file);
     }
 
     function renderTable() {
@@ -148,7 +180,7 @@
     }
 
     function startAutomation() {
-        if(!socket || !socket.connected) return alert("Você precisa conectar com o computador primeiro!");
+        if(!socket || !socket.connected) return alert("Vincule ao computador antes de iniciar!");
         if(!contacts.length) return;
         isRunning = true;
         document.getElementById('btnStart').disabled = true;
@@ -158,10 +190,9 @@
     function runLoop() {
         if (!isRunning) return;
 
-        // Se chegou ao fim da lista, para e mostra mensagem de sucesso completa
         if (currentIndex >= contacts.length) {
             stopAutomation();
-            document.getElementById('timerDisplay').innerText = "✅ Finalizado!";
+            document.getElementById('timerDisplay').innerText = "✅ Concluído!";
             document.getElementById('successModal').style.display = 'flex';
             return;
         }
@@ -169,7 +200,6 @@
         renderTable();
         const currentContact = contacts[currentIndex];
         
-        // Dispara a ordem com os dados para o servidor do PC trabalhar
         socket.emit('abrir_e_enviar', {
             name: currentContact.name,
             phone: currentContact.phone,
@@ -179,8 +209,7 @@
         contacts[currentIndex].status = 'Processado';
         currentIndex++;
 
-        // Aguarda exatamente os 15 segundos solicitados antes de pular para o próximo
-        startCountdown(15);
+        startCountdown(15); // Intervalo fixo de 15 segundos solicitado
     }
 
     function startCountdown(seconds) {
