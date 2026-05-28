@@ -3,124 +3,210 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel Controle iPhone ➡️ PC</title>
+    <title>Painel Controle Híbrido V3</title>
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <style>
-        :root { --primary-color: #075E54; --secondary-color: #128C7E; --background-color: #f0f2f5; --card-background: #ffffff; }
-        body { font-family: -apple-system, sans-serif; background-color: var(--background-color); padding: 15px; display: flex; flex-direction: column; align-items: center; }
-        .container { width: 100%; max-width: 450px; background: var(--card-background); padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); box-sizing: border-box; }
-        h1 { color: var(--primary-color); text-align: center; font-size: 1.4rem; }
-        .section-box { background: #f8f9fa; padding: 12px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #e0e0e0; }
-        textarea, input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 14px; margin-top: 5px; }
-        textarea { height: 80px; resize: none; }
-        button { width: 100%; cursor: pointer; border: none; border-radius: 6px; padding: 14px; font-weight: bold; font-size: 1rem; margin-top: 10px; }
-        .btn-primary { background-color: var(--secondary-color); color: white; }
-        .btn-success { background-color: #4CAF50; color: white; }
-        .countdown { color: #f44336; font-weight: bold; font-size: 1.3rem; display: block; text-align: center; margin: 10px 0; }
-        .status-box { padding: 10px; text-align: center; font-weight: bold; border-radius: 6px; background-color: #ffe082; color: #b78103; }
+        :root {
+            --primary-color: #075E54;
+            --secondary-color: #128C7E;
+            --background-color: #f0f2f5;
+            --card-background: #ffffff;
+            --text-color: #333333;
+            --success-color: #4CAF50;
+            --danger-color: #f44336;
+        }
+
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background-color: var(--background-color); color: var(--text-color); margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; }
+        .container { width: 100%; max-width: 500px; background: var(--card-background); padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); box-sizing: border-box; }
+        h1 { color: var(--primary-color); text-align: center; font-size: 1.4rem; margin-bottom: 15px; }
+        .section-box { background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #e0e0e0; }
+        textarea, input[type="text"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 14px; margin-top: 5px; }
+        textarea { height: 90px; resize: none; }
+        .status-connection { padding: 10px; text-align: center; font-weight: bold; border-radius: 6px; background-color: #ffe082; color: #b78103; margin-bottom: 12px; font-size: 0.9rem; }
         .connected { background-color: #c8e6c9; color: #2e7d32; }
+        button { width: 100%; cursor: pointer; border: none; border-radius: 6px; padding: 14px; font-weight: bold; font-size: 1rem; margin-top: 8px; transition: background 0.2s; }
+        .btn-primary { background-color: var(--secondary-color); color: white; }
+        .btn-success { background-color: var(--success-color); color: white; font-size: 1.1rem; }
+        .btn-danger { background-color: var(--danger-color); color: white; }
+        .countdown { color: var(--danger-color); font-weight: bold; font-size: 1.4rem; display: block; text-align: center; margin: 15px 0; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: var(--primary-color); color: white; }
+        tr.active-row { background-color: #e8f5e9; font-weight: bold; }
+        .status { padding: 3px 8px; border-radius: 3px; font-weight: bold; font-size: 0.8rem; }
+        .status-pendente { background-color: #ffe082; color: #b78103; }
+        .status-processado { background-color: #c8e6c9; color: #2e7d32; }
+        
+        /* Modal de Sucesso */
+        .success-screen { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; justify-content: center; align-items: center; color: white; text-align: center; }
+        .success-box { background: white; color: #333; padding: 30px; border-radius: 12px; max-width: 80%; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Controle de Disparo Híbrido</h1>
+    <h1>Controle de Disparos Híbrido</h1>
     
     <div class="section-box">
-        <label><strong>IP Local do seu PC:</strong></label>
-        <input type="text" id="pcIp" placeholder="Ex: 192.168.1.50" value="">
-        <button class="btn-primary" style="padding: 8px; margin-top: 5px;" onclick="conectarAoPC()">Conectar ao PC</button>
+        <label><strong>1. Vincular IP Local do seu PC:</strong></label>
+        <input type="text" id="pcIp" placeholder="Exemplo: 192.168.1.15">
+        <button class="btn-primary" style="padding: 10px;" onclick="conectarAoPC()">Conectar com o PC</button>
     </div>
 
-    <div id="connectionStatus" class="status-box">Status: Desconectado do PC</div>
-    
-    <div class="section-box" style="margin-top: 12px;">
-        <label><strong>Contatos e Mensagem:</strong></label>
-        <textarea id="csvData" placeholder="Luiz	5548999182475"></textarea>
-        <textarea id="msgTemplate" placeholder="Olá {nome}!"></textarea>
+    <div id="connectionStatus" class="status-connection">Status: Desconectado do Computador</div>
+
+    <div class="section-box">
+        <label><strong>2. Colar Colunas do Excel (Nome e Número):</strong></label>
+        <textarea id="csvData" placeholder="Cole as linhas copiadas do Excel aqui..."></textarea>
     </div>
-    
-    <button class="btn-primary" onclick="processData()">1. Carregar Lista</button>
-    <button class="btn-success" id="btnStart" onclick="startAutomation()" disabled>2. INICIAR FLUXO HÍBRIDO</button>
-    
-    <span id="timerDisplay" class="countdown">Aguardando...</span>
+
+    <div class="section-box">
+        <label><strong>3. Mensagem Customizada:</strong></label>
+        <textarea id="msgTemplate" placeholder="Olá {nome}, sua mensagem aqui!"></textarea>
+        <button class="btn-primary" onclick="processData()">Carregar Contatos</button>
+    </div>
+
+    <div class="section-box" style="background: #e8f5e9;">
+        <span id="timerDisplay" class="countdown">Aguardando Início...</span>
+        <button class="btn-success" id="btnStart" onclick="startAutomation()" disabled>▶️ INICIAR ENVIOS (15s)</button>
+        <button class="btn-danger" onclick="stopAutomation()">⏸️ PARAR TUDO</button>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Telefone</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody">
+            <tr><td colspan="3" style="text-align:center; color:#777;">Nenhum dado carregado.</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<div id="successModal" class="success-screen">
+    <div class="success-box">
+        <h2 style="color: var(--success-color); margin-top: 0;">🎉 DISPARO CONCLUÍDO!</h2>
+        <p style="font-size: 1.1rem; font-weight: 500;">Todas as mensagens da sua lista foram enviadas com sucesso absoluto!</p>
+        <button class="btn-primary" onclick="fecharModal()" style="margin-top: 15px;">Ok, Fechar</button>
+    </div>
 </div>
 
 <script>
-    let contacts = [], currentIndex = 0, isRunning = false, socket = null;
+    let contacts = [], currentIndex = 0, isRunning = false, socket = null, countdownId = null;
 
     function conectarAoPC() {
         const ip = document.getElementById('pcIp').value.trim();
-        if(!ip) return alert("Digite o IP do seu computador!");
+        if(!ip) return alert("Por favor, digite o IP do seu computador!");
         
-        // Se conecta com o VS Code rodando no seu PC
         socket = io(`http://${ip}:3000`);
         
         socket.on('connect', () => {
             const box = document.getElementById('connectionStatus');
-            box.innerText = "✅ Conectado ao Gateway do PC!";
-            box.className = "status-box connected";
-        });
-
-        socket.on('clique_feito', () => {
-            console.log("PC confirmou que apertou o Enter!");
+            box.innerText = "✅ CONECTADO AO GATEWAY DO PC!";
+            box.className = "status-connection connected";
         });
         
         socket.on('connect_error', () => {
-            alert("Não foi possível conectar. Verifique se o seu iPhone está no mesmo Wi-Fi do computador e se o IP está correto.");
+            alert("Erro de conexão! Valide se o iPhone está no mesmo Wi-Fi do computador e se o IP digitado está correto.");
         });
     }
 
     function processData() {
         const rawText = document.getElementById('csvData').value.trim();
         const template = document.getElementById('msgTemplate').value.trim();
-        if (!rawText || !template) return alert('Preencha os campos!');
+        if (!rawText || !template) return alert('Insira os contatos e a mensagem padrão!');
 
         contacts = rawText.split('\n').map(line => {
-            const parts = line.split(line.includes('\t') ? '\t' : ';');
-            return { name: parts[0]?.trim(), phone: parts[1]?.replace(/\D/g, ''), message: template.replace(/{nome}/g, parts[0]?.trim()) };
+            const separator = line.includes('\t') ? '\t' : ';';
+            const parts = line.split(separator);
+            return {
+                name: parts[0] ? parts[0].trim() : 'Cliente',
+                phone: parts[1] ? parts[1].replace(/\D/g, '') : '',
+                message: template.replace(/{nome}/g, parts[0] ? parts[0].trim() : 'Cliente'),
+                status: 'Pendente'
+            };
         }).filter(c => c.phone);
 
-        if(contacts.length > 0) document.getElementById('btnStart').disabled = false;
-        alert('Lista Pronta!');
+        currentIndex = 0;
+        document.getElementById('btnStart').disabled = false;
+        renderTable();
+        document.getElementById('timerDisplay').innerText = `${contacts.length} Contatos Prontos!`;
+    }
+
+    function renderTable() {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+        contacts.forEach((c, i) => {
+            const tr = document.createElement('tr');
+            if (i === currentIndex && isRunning) tr.className = 'active-row';
+            tr.innerHTML = `<td>${c.name}</td><td>${c.phone}</td><td><span class="status ${c.status === 'Pendente' ? 'status-pendente' : 'status-processado'}">${c.status}</span></td>`;
+            tbody.appendChild(tr);
+        });
     }
 
     function startAutomation() {
-        if(!socket) return alert("Conecte ao PC primeiro!");
+        if(!socket || !socket.connected) return alert("Você precisa conectar com o computador primeiro!");
+        if(!contacts.length) return;
         isRunning = true;
-        sendNext();
+        document.getElementById('btnStart').disabled = true;
+        runLoop();
     }
 
-    function sendNext() {
-        if (!isRunning || currentIndex >= contacts.length) {
+    function runLoop() {
+        if (!isRunning) return;
+
+        // Se chegou ao fim da lista, para e mostra mensagem de sucesso completa
+        if (currentIndex >= contacts.length) {
+            stopAutomation();
             document.getElementById('timerDisplay').innerText = "✅ Finalizado!";
+            document.getElementById('successModal').style.display = 'flex';
             return;
         }
 
-        const c = contacts[currentIndex];
+        renderTable();
+        const currentContact = contacts[currentIndex];
         
-        // Abre o link do WhatsApp Web no PC utilizando uma janela temporária
-        // Mas o truque é: Como o foco vai pro WhatsApp do PC, o robô vai agir lá!
-        const url = `https://web.whatsapp.com/send?phone=${c.phone}&text=${encodeURIComponent(c.message)}`;
-        window.open(url, '_blank');
+        // Dispara a ordem com os dados para o servidor do PC trabalhar
+        socket.emit('abrir_e_enviar', {
+            name: currentContact.name,
+            phone: currentContact.phone,
+            message: currentContact.message
+        });
 
-        // Conta 8 segundos para a página carregar no navegador e chama o clique do PC
-        let seconds = 8;
-        const interval = setInterval(() => {
+        contacts[currentIndex].status = 'Processado';
+        currentIndex++;
+
+        // Aguarda exatamente os 15 segundos solicitados antes de pular para o próximo
+        startCountdown(15);
+    }
+
+    function startCountdown(seconds) {
+        clearInterval(countdownId);
+        document.getElementById('timerDisplay').innerText = `Próximo em: ${seconds}s`;
+        
+        countdownId = setInterval(() => {
             seconds--;
-            document.getElementById('timerDisplay').innerText = `Carregando chat: ${seconds}s`;
+            document.getElementById('timerDisplay').innerText = `Próximo em: ${seconds}s`;
             if (seconds <= 0) {
-                clearInterval(interval);
-                
-                // MANDA O COMANDO PRO VS CODE DO SEU PC APERTAR ENTER!
-                socket.emit('solicitar_clique');
-                
-                currentIndex++;
-                
-                // Espera mais 4 segundos de folga pós-envio e vai para o próximo número
-                setTimeout(sendNext, 4000);
+                clearInterval(countdownId);
+                runLoop();
             }
         }, 1000);
+    }
+
+    function stopAutomation() {
+        isRunning = false;
+        clearInterval(countdownId);
+        document.getElementById('timerDisplay').innerText = "⏸️ Pausado";
+        document.getElementById('btnStart').disabled = false;
+        renderTable();
+    }
+
+    function fecharModal() {
+        document.getElementById('successModal').style.display = 'none';
     }
 </script>
 
